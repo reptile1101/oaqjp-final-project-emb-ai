@@ -1,0 +1,1 @@
+from emotin_detection import emotion_detector
