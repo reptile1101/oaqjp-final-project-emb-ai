@@ -3,11 +3,14 @@ server.py
 
 Flask server to provide an endpoint for emotion detection on user input.
 """
-
 from typing import Any, Dict, Optional
+
+# Third-party imports
 from flask import Flask, render_template, request
-from EmotionDetection.emotion_detection import emotion_detector
 from requests.exceptions import RequestException
+
+# First-party imports
+from EmotionDetection.emotion_detection import emotion_detector
 
 # Constants
 DEFAULT_HOST = "0.0.0.0"
