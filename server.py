@@ -7,6 +7,7 @@ Flask server to provide an endpoint for emotion detection on user input.
 from typing import Any, Dict, Optional
 from flask import Flask, render_template, request
 from EmotionDetection.emotion_detection import emotion_detector
+from requests.exceptions import RequestException
 
 # Constants
 DEFAULT_HOST = "0.0.0.0"
@@ -21,7 +22,7 @@ app: Flask = Flask(__name__)
 def home() -> str:
     """
     Render the home page.
-    
+
     Returns:
         str: HTML content of index page.
     """
@@ -46,22 +47,20 @@ def emotion_detector_route() -> str:
 
     try:
         response: Optional[Dict[str, Any]] = emotion_detector(text_to_analyze)
-    except Exception:  # noqa: B110
-        return "Error: Unable to process the request at the moment.", 500
+    except (RequestException, ValueError, KeyError) as exc:
+        # Catch specific exceptions that could occur in emotion_detector
+        return f"Error: Unable to process the request at the moment. ({exc})", 500
 
-    if response is None:
-        return "Error: Unable to process the request at the moment.", 500
-
-    if response.get("dominant_emotion") is None:
-        return "Invalid text! Please try again!"
+    if response is None or response.get("dominant_emotion") is None:
+        return "Invalid text! Please try again!", 400
 
     output_text: str = (
         f"For the given statement, the system response is "
-        f"'anger': {response['anger']}, "
-        f"'disgust': {response['disgust']}, "
-        f"'fear': {response['fear']}, "
-        f"'joy': {response['joy']}, "
-        f"'sadness': {response['sadness']}. "
+        f"'anger': {response.get('anger', 0)}, "
+        f"'disgust': {response.get('disgust', 0)}, "
+        f"'fear': {response.get('fear', 0)}, "
+        f"'joy': {response.get('joy', 0)}, "
+        f"'sadness': {response.get('sadness', 0)}. "
         f"The dominant emotion is {response['dominant_emotion']}."
     )
 
