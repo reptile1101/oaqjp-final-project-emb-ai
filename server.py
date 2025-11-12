@@ -1,38 +1,66 @@
+"""
+server.py
+
+Flask server to provide an endpoint for emotion detection on user input.
+"""
+
+from typing import Any, Dict, Optional
 from flask import Flask, render_template, request
 from EmotionDetection.emotion_detection import emotion_detector
 
-app = Flask(__name__)
+# Constants
+DEFAULT_HOST = "0.0.0.0"
+DEFAULT_PORT = 5000
+TEXT_PARAM = "textToAnalyze"
+
+# Initialize Flask app
+app: Flask = Flask(__name__)
+
 
 @app.route("/")
-def home():
+def home() -> str:
+    """
+    Render the home page.
+    
+    Returns:
+        str: HTML content of index page.
+    """
     return render_template("index.html")
 
+
 @app.route("/emotionDetector", methods=["GET"])
-def emotion_detector_route():
-    # Get the text from the query string
-    text_to_analyze = request.args.get('textToAnalyze')
+def emotion_detector_route() -> str:
+    """
+    Handle GET request to detect emotions from input text.
+
+    Query Parameters:
+        textToAnalyze (str): The text provided by the user.
+
+    Returns:
+        str: Formatted emotion analysis or error message.
+    """
+    text_to_analyze: Optional[str] = request.args.get(TEXT_PARAM)
 
     if not text_to_analyze:
         return "Error: No text provided for analysis.", 400
 
-    # Call the emotion detection function
-    response = emotion_detector(text_to_analyze)
+    try:
+        response: Optional[Dict[str, Any]] = emotion_detector(text_to_analyze)
+    except Exception:  # noqa: B110
+        return "Error: Unable to process the request at the moment.", 500
 
-    # If API fails or returns None
     if response is None:
         return "Error: Unable to process the request at the moment.", 500
 
-    # ✅ Handle case where the dominant emotion is None (invalid or blank input)
-    if response["dominant_emotion"] is None:
+    if response.get("dominant_emotion") is None:
         return "Invalid text! Please try again!"
 
-    # Otherwise, return formatted output
-    output_text = (
+    output_text: str = (
         f"For the given statement, the system response is "
         f"'anger': {response['anger']}, "
         f"'disgust': {response['disgust']}, "
         f"'fear': {response['fear']}, "
-        f"'joy': {response['joy']} and "
+        f"'joy': {response['joy']}, "
         f"'sadness': {response['sadness']}. "
         f"The dominant emotion is {response['dominant_emotion']}."
     )
@@ -41,4 +69,4 @@ def emotion_detector_route():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host=DEFAULT_HOST, port=DEFAULT_PORT)
