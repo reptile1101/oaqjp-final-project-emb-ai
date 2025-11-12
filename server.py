@@ -11,18 +11,22 @@ def home():
 def emotion_detector_route():
     # Get the text from the query string
     text_to_analyze = request.args.get('textToAnalyze')
-    
+
     if not text_to_analyze:
         return "Error: No text provided for analysis.", 400
 
-    # Call your emotion detection function
+    # Call the emotion detection function
     response = emotion_detector(text_to_analyze)
 
     # If API fails or returns None
     if response is None:
         return "Error: Unable to process the request at the moment.", 500
 
-    # Format output string
+    # ✅ Handle case where the dominant emotion is None (invalid or blank input)
+    if response["dominant_emotion"] is None:
+        return "Invalid text! Please try again!"
+
+    # Otherwise, return formatted output
     output_text = (
         f"For the given statement, the system response is "
         f"'anger': {response['anger']}, "
@@ -34,6 +38,7 @@ def emotion_detector_route():
     )
 
     return output_text
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
